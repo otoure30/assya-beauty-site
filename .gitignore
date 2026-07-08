@@ -2,8 +2,11 @@
 node_modules
 
 # next
-.next
-out
+.next/
+out/
+
+# build cache
+*.tsbuildinfo
 
 # vercel
 .vercel
@@ -17,7 +20,15 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
+.next-dev-*
+dev-server.*
+
+# local design notes
+assya-brand.md
+assya-design-direction.md
 
 # system
 .DS_Store
 Thumbs.db
+.gstack/
