@@ -3,64 +3,76 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Calendar,
+  CheckCircle2,
+  Clock,
+  CreditCard,
   Flower2,
-  Heart,
   Menu,
   MessageCircle,
   Minus,
   Plus,
   Search,
-  ShoppingBag,
   Sparkles,
   X,
 } from "lucide-react";
 import {
   articles,
+  booking,
   botanicals,
   brand,
   collections,
+  commitments,
+  offers,
+  pricingGroups,
   products,
   services,
   socials,
+  type Product,
 } from "@/data/content";
 
 const navItems = [
-  ["Résultats", "#resultats"],
-  ["Diagnostic", "#diagnostic"],
-  ["Centre", "#centre"],
-  ["Ingrédients", "#herbier"],
-  ["Routines", "#collections"],
-  ["Boutique", "#boutique"],
-  ["Journal", "#journal"],
+  ["Services", "#centre"],
+  ["Tarifs", "#tarifs"],
+  ["Rendez-vous", "#reservation"],
+  ["Produits", "#boutique"],
+  ["Engagements", "#engagements"],
+  ["Contact", "#contact"],
 ];
 
 const hairStories = [
   {
-    label: "Brillance",
-    title: "Cheveux plus souples, mieux nourris",
+    label: "Naturel",
+    title: "La nature au service de vos cheveux",
     image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1100&q=85",
   },
   {
-    label: "Définition",
-    title: "Textures bouclées et crépues mieux dessinées",
+    label: "Sain",
+    title: "Des soins ciblés pour un cuir chevelu apaisé",
     image: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=1100&q=85",
   },
   {
-    label: "Confiance",
-    title: "Une routine visible dans le miroir",
+    label: "Efficace",
+    title: "Des cheveux sains, une confiance retrouvée",
     image: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1100&q=85",
   },
 ];
 
+const recommendationMap = {
+  hydratation: [
+    "Diagnostic capillaire personnalisé",
+    "Soin capillaire bio karité & gombo",
+    "Soin hydratation intense",
+  ],
+  pellicules: [
+    "Diagnostic approfondi",
+    "Traitement pellicules",
+    "Bain d'huile + massage du cuir chevelu",
+  ],
+  chute: ["Diagnostic approfondi", "Traitement alopécie", "Sérum Miracle Croissance+"],
+};
+
 const bookingServicePath = "diagnostic-capillaire-personnalise/diagnostic-60-minutes";
 const bookingBaseUrl = (process.env.NEXT_PUBLIC_BOOKING_BASE_URL || "http://127.0.0.1:5177").replace(/\/$/, "");
-
-type CartItem = {
-  id: string;
-  name: string;
-  price: number;
-  qty: number;
-};
 
 function useReveal() {
   const ref = useRef<HTMLElement>(null);
@@ -72,18 +84,19 @@ function useReveal() {
   return ref;
 }
 
+function whatsappUrl(message: string) {
+  return `${brand.whatsapp}?text=${encodeURIComponent(message)}`;
+}
+
 export function AssyaExperience() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [cartOpen, setCartOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingLoaded, setBookingLoaded] = useState(false);
   const [bookingSlow, setBookingSlow] = useState(false);
   const [category, setCategory] = useState("Tous");
   const [query, setQuery] = useState("");
-  const [wishlist, setWishlist] = useState<string[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [answers, setAnswers] = useState({
-    texture: "crepus",
+    texture: "naturels",
     goal: "hydratation",
     scalp: "sensible",
   });
@@ -94,46 +107,30 @@ export function AssyaExperience() {
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       const categoryMatch = category === "Tous" || product.category === category;
-      const textMatch = `${product.name} ${product.need} ${product.ingredients}`
+      const textMatch = `${product.name} ${product.need} ${product.ingredients} ${product.description}`
         .toLowerCase()
         .includes(query.toLowerCase());
       return categoryMatch && textMatch;
     });
   }, [category, query]);
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-
-  const addToCart = (product: (typeof products)[number]) => {
-    setCart((current) => {
-      const existing = current.find((item) => item.id === product.id);
-      if (existing) {
-        return current.map((item) => (item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
-      }
-      return [...current, { id: product.id, name: product.name, price: product.price, qty: 1 }];
-    });
-    setCartOpen(true);
-  };
-
-  const diagnosticProducts = products.filter((product) => {
-    if (answers.goal === "pousse") return product.need === "Pousse" || product.name.includes("Croissance");
-    if (answers.goal === "nutrition") return ["Nutrition", "Cheveux crépus"].includes(product.need);
-    return ["Hydratation", "Réparation", "Rituel centre"].includes(product.need);
-  });
-
+  const recommendedCare = recommendationMap[answers.goal as keyof typeof recommendationMap];
   const bookingPublicUrl = `${bookingBaseUrl}/s/${bookingServicePath}`;
   const bookingEmbedUrl = `${bookingBaseUrl}/embed/${bookingServicePath}`;
+  const bookingWhatsAppUrl = whatsappUrl(
+    `Bonjour ${brand.brand}, je souhaite prendre rendez-vous.\nNom et prénom :\nNuméro WhatsApp :\nDate souhaitée :\nPrestation souhaitée :`,
+  );
 
   useEffect(() => {
-    const overlayOpen = menuOpen || cartOpen || bookingOpen;
+    const overlayOpen = menuOpen || bookingOpen;
     document.body.classList.toggle("overlay-open", overlayOpen);
     return () => document.body.classList.remove("overlay-open");
-  }, [bookingOpen, cartOpen, menuOpen]);
+  }, [bookingOpen, menuOpen]);
 
   useEffect(() => {
     const closeOverlay = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setBookingOpen(false);
-      setCartOpen(false);
       setMenuOpen(false);
     };
 
@@ -154,8 +151,8 @@ export function AssyaExperience() {
   return (
     <main ref={rootRef} className="site-shell">
       <div className="announce-bar">
-        <a href="#diagnostic">Diagnostic capillaire personnalisé</a>
-        <span>{brand.taglineSecondary}</span>
+        <a href="#reservation">{booking.opening}</a>
+        <span>{brand.badgeLine}</span>
         <a href={brand.whatsapp} target="_blank" rel="noreferrer">
           WhatsApp +224 {brand.phone}
         </a>
@@ -164,7 +161,7 @@ export function AssyaExperience() {
       <header className="masthead">
         <a className="wordmark" href="#accueil" aria-label="Assya Beauty accueil">
           <span className="wordmark-name">{brand.logo}</span>
-          <span className="wordmark-sub">Beauty Cosmébio</span>
+          <span className="wordmark-sub">Beauty Cosmebio</span>
         </a>
         <nav className="primary-nav" aria-label="Navigation principale">
           {navItems.map(([label, href]) => (
@@ -174,11 +171,10 @@ export function AssyaExperience() {
           ))}
         </nav>
         <div className="masthead-actions">
-          <button className="icon-button" onClick={() => setCartOpen(true)} aria-label="Ouvrir le panier">
-            <ShoppingBag size={17} />
-            <span className="icon-label">Panier</span>
-            {cart.length > 0 && <span className="badge">{cart.length}</span>}
-          </button>
+          <a className="icon-button" href={brand.whatsapp} target="_blank" rel="noreferrer" aria-label="Contacter sur WhatsApp">
+            <MessageCircle size={17} />
+            <span className="icon-label">WhatsApp</span>
+          </a>
           <button className="menu-button" onClick={() => setMenuOpen(true)} aria-label="Ouvrir le menu">
             <Menu size={18} />
           </button>
@@ -200,18 +196,17 @@ export function AssyaExperience() {
 
       <section id="accueil" className="hero">
         <div className="hero-copy" data-reveal>
-          <p className="tag">Maison de soin capillaire botanique</p>
-          <h1>Assya Beauty Cosmébio</h1>
-          <p>
-            Des cheveux sains, une texture plus belle, une confiance retrouvée. Le produit compte,
-            mais le résultat sur la personne compte davantage.
+          <p className="tag">
+            {brand.centerName} - {brand.centerMission}
           </p>
+          <h1>{brand.brand}</h1>
+          <p>{brand.intro}</p>
           <div className="hero-actions">
-            <a className="button primary" href="#resultats">
-              Voir les résultats
+            <a className="button primary" href="#centre">
+              Voir les services
             </a>
             <button className="button ghost" onClick={() => setBookingOpen(true)}>
-              <Calendar size={16} /> Faire mon diagnostic
+              <Calendar size={16} /> Prendre rendez-vous
             </button>
           </div>
         </div>
@@ -219,9 +214,9 @@ export function AssyaExperience() {
 
       <section id="resultats" className="hair-showcase">
         <div className="section-head compact" data-reveal>
-          <p className="tag">Effet recherché</p>
-          <h2>On doit d&apos;abord voir de beaux cheveux, pas seulement des flacons.</h2>
-          <a href="#diagnostic">Trouver ma routine</a>
+          <p className="tag">{brand.tagline}</p>
+          <h2>{brand.taglineSecondary}</h2>
+          <a href="#reservation">Préparer ma visite</a>
         </div>
         <div className="hair-grid">
           {hairStories.map((story) => (
@@ -243,46 +238,46 @@ export function AssyaExperience() {
       <section id="diagnostic" className="diagnostic">
         <div className="diagnostic-copy" data-reveal>
           <p className="tag">Diagnostic</p>
-          <h2>Comprendre la texture avant de conseiller un soin.</h2>
+          <h2>Un conseil adapté avant chaque soin.</h2>
           <p>
-            La routine doit partir du cuir chevelu, de la fibre et du résultat attendu : hydratation,
-            pousse, nutrition ou réparation.
+            Le diagnostic capillaire permet d&apos;analyser le cuir chevelu, l&apos;état des cheveux et la
+            prestation la plus adaptée avant de commencer une routine.
           </p>
         </div>
         <div className="consult" data-reveal>
           <div className="question-grid">
             <Question
-              label="Texture"
+              label="Cheveux"
               value={answers.texture}
               onChange={(value) => setAnswers({ ...answers, texture: value })}
-              options={["crepus", "boucles", "defrises"]}
+              options={["naturels", "bouclés", "crépus", "défrisés"]}
             />
             <Question
-              label="Objectif"
+              label="Besoin"
               value={answers.goal}
               onChange={(value) => setAnswers({ ...answers, goal: value })}
-              options={["hydratation", "pousse", "nutrition"]}
+              options={["hydratation", "pellicules", "chute"]}
             />
             <Question
               label="Cuir chevelu"
               value={answers.scalp}
               onChange={(value) => setAnswers({ ...answers, scalp: value })}
-              options={["sensible", "sec", "gras"]}
+              options={["sensible", "sec", "démangeaisons"]}
             />
           </div>
           <div className="prescription">
-            <h3>Routine recommandée</h3>
+            <h3>À prévoir lors du rendez-vous</h3>
             <p>
-              Profil <em>{answers.texture}</em>, objectif <em>{answers.goal}</em>. Les soins proposés
-              accompagnent le résultat visuel, ils ne le remplacent pas.
+              Profil cheveux <em>{answers.texture}</em>, besoin <em>{answers.goal}</em>, cuir chevelu{" "}
+              <em>{answers.scalp}</em>. Le diagnostic final se fait au centre.
             </p>
             <div className="prescription-list">
-              {diagnosticProducts.slice(0, 3).map((product, index) => (
-                <button key={product.id} onClick={() => addToCart(product)} className="prescription-item">
+              {recommendedCare.map((item, index) => (
+                <a key={item} href="#reservation" className="prescription-item">
                   <span>{String(index + 1).padStart(2, "0")}</span>
-                  <strong>{product.name}</strong>
-                  <Plus size={15} />
-                </button>
+                  <strong>{item}</strong>
+                  <Calendar size={15} />
+                </a>
               ))}
             </div>
           </div>
@@ -291,20 +286,20 @@ export function AssyaExperience() {
 
       <section id="centre" className="center">
         <div className="section-head compact" data-reveal>
-          <p className="tag">Centre capillaire</p>
+          <p className="tag">Nos services</p>
           <h2>{brand.claim}.</h2>
           <button className="button primary" onClick={() => setBookingOpen(true)}>
             <Calendar size={16} /> Prendre rendez-vous
           </button>
         </div>
         <ul className="service-list" data-reveal>
-          {services.map(([name, description, duration]) => (
-            <li key={name}>
+          {services.map((service) => (
+            <li key={service.name}>
               <div>
-                <h3>{name}</h3>
-                <p>{description}</p>
+                <h3>{service.name}</h3>
+                <p>{service.description}</p>
               </div>
-              <span>{duration}</span>
+              <span>{service.label}</span>
             </li>
           ))}
         </ul>
@@ -313,12 +308,59 @@ export function AssyaExperience() {
       <section className="proof">
         <div className="proof-media" data-reveal />
         <div className="proof-copy" data-reveal>
-          <p className="tag">Avant / Après</p>
-          <h2>La marque doit vendre la transformation.</h2>
+          <p className="tag">{brand.badgeLine}</p>
+          <h2>{brand.careLine}</h2>
           <p>
-            Les images de cheveux, de cuir chevelu sain et de personnes confiantes créent la preuve
-            émotionnelle. Les produits viennent ensuite comme moyen d&apos;y arriver.
+            Le centre associe diagnostic, soins naturels, traitements ciblés et produits capillaires
+            bio pour accompagner les cheveux vers une routine plus saine.
           </p>
+        </div>
+      </section>
+
+      <section id="tarifs" className="pricing">
+        <div className="section-head compact" data-reveal>
+          <p className="tag">Tarifs</p>
+          <h2>Soins, produits, accessoires et tresses en GNF.</h2>
+          <a href="#reservation">Réserver un créneau</a>
+        </div>
+        <div className="pricing-grid">
+          {pricingGroups.map((group) => (
+            <article className="price-card" key={group.title} data-reveal>
+              <h3>{group.title}</h3>
+              <div className="price-table-wrap">
+                <table className="price-table">
+                  <tbody>
+                    {group.items.map((item) => (
+                      <tr key={`${item.name}-${item.detail}-${item.price}`}>
+                        <th scope="row">
+                          <strong>{item.name}</strong>
+                          <span>{item.detail}</span>
+                        </th>
+                        <td>{item.price}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="offers-grid">
+          {offers.map((offer) => (
+            <article className="offer-card" key={offer.name} data-reveal>
+              <span>Offre spéciale</span>
+              <h3>{offer.name}</h3>
+              <strong>{offer.price}</strong>
+              <ul>
+                {offer.includes.map((item) => (
+                  <li key={item}>
+                    <CheckCircle2 size={15} />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -341,9 +383,9 @@ export function AssyaExperience() {
 
       <section id="collections" className="collections">
         <div className="section-head compact" data-reveal>
-          <p className="tag">Routines</p>
-          <h2>Organiser le conseil par besoin, pas par rayon.</h2>
-          <a href="#boutique">Voir les soins</a>
+          <p className="tag">Besoins</p>
+          <h2>Choisir une routine selon l&apos;état des cheveux.</h2>
+          <a href="#boutique">Voir les produits</a>
         </div>
         <div className="collection-grid">
           {collections.map(([name, note], index) => (
@@ -358,9 +400,11 @@ export function AssyaExperience() {
 
       <section id="boutique" className="shop">
         <div className="section-head compact" data-reveal>
-          <p className="tag">Boutique</p>
-          <h2>Les soins qui accompagnent la transformation.</h2>
-          <a href="#diagnostic">Choisir avec diagnostic</a>
+          <p className="tag">Catalogue</p>
+          <h2>Produits capillaires naturels et bio.</h2>
+          <a href={brand.whatsapp} target="_blank" rel="noreferrer">
+            Commander sur WhatsApp
+          </a>
         </div>
         <div className="shop-tools" data-reveal>
           <label className="search-field">
@@ -368,7 +412,7 @@ export function AssyaExperience() {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Chercher une formule, un actif..."
+              placeholder="Chercher une gamme, un soin, un actif..."
               aria-label="Rechercher un produit"
             />
           </label>
@@ -386,33 +430,101 @@ export function AssyaExperience() {
         </div>
         <div className="product-grid">
           {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              wishlist={wishlist}
-              setWishlist={setWishlist}
-              addToCart={addToCart}
-            />
+            <ProductCard key={product.id} product={product} />
           ))}
           {filteredProducts.length === 0 && (
-            <p className="shop-empty">Aucun soin ne correspond. Essayez une autre texture ou catégorie.</p>
+            <p className="shop-empty">Aucun produit ne correspond. Essayez un autre mot-clé ou filtre.</p>
           )}
+        </div>
+      </section>
+
+      <section id="reservation" className="reservation">
+        <div className="section-head compact" data-reveal>
+          <p className="tag">{booking.title}</p>
+          <h2>{booking.intro}</h2>
+          <button className="button primary" onClick={() => setBookingOpen(true)}>
+            <Calendar size={16} /> Ouvrir le calendrier
+          </button>
+        </div>
+        <div className="reservation-grid">
+          <article className="reservation-panel" data-reveal>
+            <Clock size={18} />
+            <h3>Horaires et créneaux</h3>
+            <p>{booking.opening}</p>
+            <div className="slot-grid">
+              {booking.slots.map((slot) => (
+                <span key={slot}>{slot}</span>
+              ))}
+            </div>
+          </article>
+          <article className="reservation-panel" data-reveal>
+            <Calendar size={18} />
+            <h3>Informations demandées</h3>
+            <ul>
+              {booking.requiredFields.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p className="small-note">Observations : {booking.observations}</p>
+          </article>
+          <article className="reservation-panel accent" data-reveal>
+            <CreditCard size={18} />
+            <h3>Acompte obligatoire</h3>
+            <strong>{booking.deposit}</strong>
+            <p>{booking.depositText}</p>
+            <ul>
+              {booking.depositFields.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
+        </div>
+        <div className="condition-panel" data-reveal>
+          <h3>Conditions de réservation</h3>
+          <ul>
+            {booking.conditions.map((condition) => (
+              <li key={condition}>{condition}</li>
+            ))}
+          </ul>
+          <div className="condition-actions">
+            <button className="button primary" onClick={() => setBookingOpen(true)}>
+              <Calendar size={16} /> Réserver en ligne
+            </button>
+            <a className="button ghost" href={bookingWhatsAppUrl} target="_blank" rel="noreferrer">
+              <MessageCircle size={16} /> Envoyer sur WhatsApp
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section id="engagements" className="commitments">
+        <div className="section-head compact" data-reveal>
+          <p className="tag">Engagements</p>
+          <h2>{brand.mission}</h2>
+        </div>
+        <div className="commitment-grid">
+          {commitments.map((commitment) => (
+            <div className="commitment-item" key={commitment} data-reveal>
+              <CheckCircle2 size={17} />
+              <span>{commitment}</span>
+            </div>
+          ))}
         </div>
       </section>
 
       <section id="journal" className="journal">
         <div className="section-head compact" data-reveal>
-          <p className="tag">Le carnet</p>
-          <h2>Conseils, actifs et gestes essentiels.</h2>
+          <p className="tag">Conseils</p>
+          <h2>Repères utiles avant votre soin.</h2>
         </div>
         <div className="article-grid">
           {articles.map(([title, summary]) => (
             <article key={title} data-reveal>
-              <span>Conseil</span>
+              <span>Note</span>
               <h3>{title}</h3>
               <p>{summary}</p>
-              <a href="#contact">
-                Lire prochainement
+              <a href="#reservation">
+                Préparer ma visite
                 <Sparkles size={12} />
               </a>
             </article>
@@ -423,21 +535,18 @@ export function AssyaExperience() {
       <section className="faq">
         <div className="section-head compact" data-reveal>
           <p className="tag">Questions fréquentes</p>
-          <h2>Avant de choisir votre soin.</h2>
+          <h2>Avant de confirmer votre rendez-vous.</h2>
         </div>
         <div className="faq-list" data-reveal>
           {[
             [
-              "Les produits sont-ils naturels ?",
-              "La ligne s’appuie sur des ingrédients d’origine végétale associés à des formulations capillaires ciblées.",
+              "L'acompte est-il obligatoire ?",
+              `Oui. Un acompte fixe de ${booking.deposit} est demandé pour confirmer le rendez-vous.`,
             ],
+            ["Quels sont les jours d'ouverture ?", booking.opening],
             [
-              "Puis-je les utiliser sur cheveux crépus ?",
-              "Oui. Le diagnostic vous aide à choisir selon votre texture, votre objectif et la sensibilité.",
-            ],
-            [
-              "Comment démarrer ma routine ?",
-              "Commencez par la routine recommandée, puis ajustez selon le ressenti avec un suivi en centre.",
+              "Comment choisir la bonne prestation ?",
+              "Commencez par le diagnostic capillaire personnalisé si vous hésitez entre traitement, soin ou routine produit.",
             ],
           ].map(([question, answer], index) => (
             <button
@@ -461,27 +570,37 @@ export function AssyaExperience() {
           <p>{brand.mission}</p>
         </div>
         <div className="colophon-links">
-          <a href="mailto:contact@assyabeauty.com">
-            <span>Contact</span>
-            <strong>contact@assyabeauty.com</strong>
+          <a href={`tel:+224${brand.phone.replace(/\s/g, "")}`}>
+            <span>Téléphone</span>
+            <strong>+224 {brand.phone}</strong>
           </a>
           <a href={brand.whatsapp} target="_blank" rel="noreferrer">
             <span>WhatsApp</span>
             <strong>+224 {brand.phone}</strong>
           </a>
+          <a href={`mailto:${brand.email}`}>
+            <span>E-mail</span>
+            <strong>{brand.email}</strong>
+          </a>
+          <span className="contact-line">
+            <span>Adresse</span>
+            <strong>{brand.address}</strong>
+          </span>
           {socials
-            .filter(([name]) => name !== "WhatsApp")
-            .map(([name, handle, href]) => (
-              <a
-                key={name}
-                href={href}
-                target={href === "#" ? undefined : "_blank"}
-                rel={href === "#" ? undefined : "noreferrer"}
-              >
-                <span>{name}</span>
-                <strong>{handle}</strong>
-              </a>
-            ))}
+            .filter((social) => social.name !== "WhatsApp")
+            .map((social) =>
+              social.href ? (
+                <a key={social.name} href={social.href} target="_blank" rel="noreferrer">
+                  <span>{social.name}</span>
+                  <strong>{social.handle}</strong>
+                </a>
+              ) : (
+                <span className="contact-line" key={social.name}>
+                  <span>{social.name}</span>
+                  <strong>{social.handle}</strong>
+                </span>
+              ),
+            )}
         </div>
       </footer>
 
@@ -496,44 +615,9 @@ export function AssyaExperience() {
         </a>
         <button onClick={() => setBookingOpen(true)}>
           <Calendar size={16} />
-          Diagnostic
+          Rendez-vous
         </button>
       </nav>
-
-      {cartOpen && (
-        <aside className="drawer" aria-label="Panier">
-          <div className="drawer-head">
-            <h2>Panier</h2>
-            <button className="icon-button" onClick={() => setCartOpen(false)} aria-label="Fermer le panier">
-              <X size={18} />
-            </button>
-          </div>
-          {cart.length === 0 ? (
-            <p className="empty">Votre panier est vide.</p>
-          ) : (
-            <>
-              {cart.map((item) => (
-                <div className="cart-line" key={item.id}>
-                  <div>
-                    <strong>{item.name}</strong>
-                    <span>
-                      {item.qty} × {item.price} €
-                    </span>
-                  </div>
-                  <button onClick={() => setCart((current) => current.filter((line) => line.id !== item.id))}>
-                    Retirer
-                  </button>
-                </div>
-              ))}
-              <div className="drawer-total">
-                <span>Total</span>
-                <strong>{total} €</strong>
-              </div>
-              <button className="button primary full">Paiement sécurisé</button>
-            </>
-          )}
-        </aside>
-      )}
 
       {bookingOpen && (
         <div className="modal-backdrop" onClick={() => setBookingOpen(false)}>
@@ -551,7 +635,9 @@ export function AssyaExperience() {
               <div>
                 <p className="tag">Réservation</p>
                 <h2 id="booking-modal-title">Prendre rendez-vous</h2>
-                <p className="booking-intro">Diagnostic capillaire personnalisé en 60 minutes.</p>
+                <p className="booking-intro">
+                  Diagnostic capillaire personnalisé. Acompte de {booking.deposit} demandé pour confirmer.
+                </p>
               </div>
               <a className="booking-external-link" href={bookingPublicUrl} target="_blank" rel="noreferrer">
                 Ouvrir en grand
@@ -564,12 +650,12 @@ export function AssyaExperience() {
                   <strong>{bookingSlow ? "Connexion lente" : "Connexion au calendrier"}</strong>
                   <p>
                     {bookingSlow
-                      ? "Le calendrier prend du temps à charger. Ouvrez la page complète si votre réseau est faible."
+                      ? "Le calendrier prend du temps à charger. Vous pouvez aussi envoyer votre demande sur WhatsApp."
                       : "Chargement sécurisé de la prise de rendez-vous."}
                   </p>
                   {bookingSlow && (
-                    <a href={bookingPublicUrl} target="_blank" rel="noreferrer">
-                      Ouvrir la page complète
+                    <a href={bookingWhatsAppUrl} target="_blank" rel="noreferrer">
+                      Envoyer sur WhatsApp
                     </a>
                   )}
                 </div>
@@ -591,42 +677,23 @@ export function AssyaExperience() {
   );
 }
 
-function ProductCard({
-  product,
-  wishlist,
-  setWishlist,
-  addToCart,
-}: {
-  product: (typeof products)[number];
-  wishlist: string[];
-  setWishlist: React.Dispatch<React.SetStateAction<string[]>>;
-  addToCart: (product: (typeof products)[number]) => void;
-}) {
+function ProductCard({ product }: { product: Product }) {
+  const productMessage = whatsappUrl(
+    `Bonjour ${brand.brand}, je souhaite connaître la disponibilité de ce produit : ${product.name}.`,
+  );
+
   return (
-    <article className="product" data-reveal>
-      <div className="product-figure" style={{ backgroundImage: `url(${product.image})` }}>
-        <button
-          className={wishlist.includes(product.id) ? "heart saved" : "heart"}
-          onClick={() =>
-            setWishlist((current) =>
-              current.includes(product.id) ? current.filter((id) => id !== product.id) : [...current, product.id],
-            )
-          }
-          aria-label="Ajouter aux favoris"
-        >
-          <Heart size={16} />
-        </button>
-      </div>
+    <article className={product.featured ? "product featured-product" : "product"} data-reveal>
       <div className="product-info">
         <p>{product.category}</p>
         <h3>{product.name}</h3>
-        <span>{product.ingredients}</span>
-        <small>{product.need}</small>
+        <span>{product.description}</span>
+        <small>{product.ingredients}</small>
         <div className="product-buy">
-          <strong>{product.price} €</strong>
-          <button onClick={() => addToCart(product)}>
-            <Plus size={15} /> Ajouter
-          </button>
+          <strong>{product.price}</strong>
+          <a href={productMessage} target="_blank" rel="noreferrer">
+            <MessageCircle size={15} /> WhatsApp
+          </a>
         </div>
       </div>
     </article>

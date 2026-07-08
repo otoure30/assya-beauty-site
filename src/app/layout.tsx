@@ -25,9 +25,9 @@ const mono = Spline_Sans_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AB Cosmébio | Centre Capillaire Nature & Soin",
+  title: "Assya Beauty Cosmebio | Centre capillaire Nature & Soin",
   description:
-    "Assya Beauty Cosmébio, centre capillaire Nature & Soin. Diagnostic personnalisé, traitements pellicules et alopécie, soins bio Karité Gombo et produits capillaires naturels.",
+    "Assya Beauty Cosmebio à Enta Mosquée Marocaine : diagnostic capillaire personnalisé, traitements pellicules et alopécie, soins bio karité gombo et produits capillaires naturels.",
 };
 
 export default function RootLayout({
