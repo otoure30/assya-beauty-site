@@ -239,6 +239,53 @@ section {
   padding-top: 72px;
 }
 
+.page-hero {
+  align-items: center;
+  background:
+    linear-gradient(90deg, rgba(10, 14, 11, 0.86), rgba(10, 14, 11, 0.54), rgba(10, 14, 11, 0.24)),
+    url("https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=2200&q=85")
+      center / cover;
+  color: var(--surface);
+  display: flex;
+  min-height: 48svh;
+  padding-bottom: 64px;
+  padding-top: 64px;
+}
+
+.compact-page-hero {
+  min-height: 420px;
+}
+
+.page-hero-copy {
+  max-width: 760px;
+}
+
+.page-hero h1 {
+  color: var(--surface);
+}
+
+.page-hero .tag {
+  color: var(--gold);
+}
+
+.page-hero p:not(.tag) {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 18px;
+  margin: 22px 0 0;
+  max-width: 680px;
+}
+
+.page-hero .button.ghost {
+  border-color: rgba(255, 255, 255, 0.42);
+  color: var(--surface);
+}
+
+.page-hero .button.ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.72);
+  color: var(--surface);
+}
+
 .hero-copy {
   max-width: 560px;
 }
@@ -425,11 +472,13 @@ h3 {
 .collections,
 .diagnostic,
 .center,
+.home-offers,
 .pricing,
 .herbier,
 .proof,
 .reservation,
 .commitments,
+.page-section,
 .journal,
 .faq,
 .colophon {
@@ -502,6 +551,10 @@ h3 {
 }
 
 .featured-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.preview-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -998,6 +1051,19 @@ h3 {
   color: var(--green);
 }
 
+.home-offers {
+  background: var(--paper);
+  border-top: 1px solid var(--line-soft);
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px auto 0;
+  max-width: var(--maxw);
+}
+
 .herbier {
   background: var(--surface);
   border-top: 1px solid var(--line-soft);
@@ -1180,6 +1246,56 @@ h3 {
   margin-top: 4px;
 }
 
+.hero-actions > .condition-actions {
+  margin-top: 0;
+}
+
+.calendar-panel {
+  margin: 20px auto 0;
+  max-width: var(--maxw);
+}
+
+.calendar-panel .section-head {
+  margin-bottom: 18px;
+}
+
+.calendar-embed {
+  background: var(--surface);
+  border: 1px solid var(--line-soft);
+  padding: 14px;
+}
+
+.calendar-embed .booking-iframe-wrap {
+  height: 720px;
+}
+
+.mobile-calendar-panel {
+  background: var(--ink);
+  color: var(--surface);
+  display: grid;
+  gap: 14px;
+  margin: 14px auto 0;
+  max-width: var(--maxw);
+  padding: 22px;
+}
+
+.mobile-calendar-panel .tag {
+  color: var(--gold);
+  margin-bottom: 0;
+}
+
+.mobile-calendar-panel h3 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  max-width: 720px;
+}
+
+.mobile-calendar-panel .button.ghost {
+  border-color: rgba(255, 255, 255, 0.32);
+  color: var(--surface);
+}
+
 .commitments {
   background: var(--surface);
   border-top: 1px solid var(--line-soft);
@@ -1212,6 +1328,14 @@ h3 {
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.home-ingredients {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 18px auto 0;
+  max-width: var(--maxw);
 }
 
 .journal {
@@ -1603,6 +1727,7 @@ h3 {
   .product-grid,
   .hair-grid,
   .ingredient-grid,
+  .home-ingredients,
   .pricing-grid,
   .offers-grid,
   .reservation-grid,
@@ -1708,6 +1833,14 @@ h3 {
     padding-top: 42px;
   }
 
+  .page-hero,
+  .compact-page-hero {
+    align-items: end;
+    min-height: 54svh;
+    padding-bottom: 42px;
+    padding-top: 42px;
+  }
+
   h1 {
     font-size: 38px;
   }
@@ -1720,11 +1853,20 @@ h3 {
     font-size: 16px;
   }
 
+  .page-hero p:not(.tag) {
+    font-size: 16px;
+  }
+
   .hero-actions {
     display: grid;
   }
 
   .hero-actions .button {
+    width: 100%;
+  }
+
+  .hero-actions > .condition-actions {
+    display: grid;
     width: 100%;
   }
 
@@ -1760,6 +1902,7 @@ h3 {
   .hair-grid,
   .collection-grid,
   .ingredient-grid,
+  .home-ingredients,
   .pricing-grid,
   .offers-grid,
   .reservation-grid,
@@ -1782,11 +1925,13 @@ h3 {
   .collections,
   .diagnostic,
   .center,
+  .home-offers,
   .pricing,
   .herbier,
   .proof,
   .reservation,
   .commitments,
+  .page-section,
   .journal,
   .faq,
   .colophon {
@@ -1893,6 +2038,19 @@ h3 {
 
   .condition-actions .button {
     width: 100%;
+  }
+
+  .calendar-panel {
+    display: none;
+  }
+
+  .mobile-calendar-panel {
+    margin-top: 12px;
+    padding: 18px;
+  }
+
+  .mobile-calendar-panel h3 {
+    font-size: 24px;
   }
 
   .faq-q {
