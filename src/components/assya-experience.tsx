@@ -10,6 +10,7 @@ import {
   Minus,
   Plus,
   Search,
+  ShoppingBag,
   Sparkles,
   X,
 } from "lucide-react";
@@ -51,6 +52,9 @@ const hairStories = [
   },
 ];
 
+const bookingServicePath = "diagnostic-capillaire-personnalise/diagnostic-60-minutes";
+const bookingBaseUrl = (process.env.NEXT_PUBLIC_BOOKING_BASE_URL || "http://127.0.0.1:5177").replace(/\/$/, "");
+
 type CartItem = {
   id: string;
   name: string;
@@ -72,6 +76,8 @@ export function AssyaExperience() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [bookingLoaded, setBookingLoaded] = useState(false);
+  const [bookingSlow, setBookingSlow] = useState(false);
   const [category, setCategory] = useState("Tous");
   const [query, setQuery] = useState("");
   const [wishlist, setWishlist] = useState<string[]>([]);
@@ -114,10 +120,36 @@ export function AssyaExperience() {
     return ["Hydratation", "Réparation", "Rituel centre"].includes(product.need);
   });
 
-  const bookingPublicUrl =
-    "http://127.0.0.1:5177/s/diagnostic-capillaire-personnalise/diagnostic-60-minutes";
-  const bookingEmbedUrl =
-    "http://127.0.0.1:5177/embed/diagnostic-capillaire-personnalise/diagnostic-60-minutes";
+  const bookingPublicUrl = `${bookingBaseUrl}/s/${bookingServicePath}`;
+  const bookingEmbedUrl = `${bookingBaseUrl}/embed/${bookingServicePath}`;
+
+  useEffect(() => {
+    const overlayOpen = menuOpen || cartOpen || bookingOpen;
+    document.body.classList.toggle("overlay-open", overlayOpen);
+    return () => document.body.classList.remove("overlay-open");
+  }, [bookingOpen, cartOpen, menuOpen]);
+
+  useEffect(() => {
+    const closeOverlay = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setBookingOpen(false);
+      setCartOpen(false);
+      setMenuOpen(false);
+    };
+
+    window.addEventListener("keydown", closeOverlay);
+    return () => window.removeEventListener("keydown", closeOverlay);
+  }, []);
+
+  useEffect(() => {
+    if (!bookingOpen) return;
+
+    setBookingLoaded(false);
+    setBookingSlow(false);
+
+    const timer = window.setTimeout(() => setBookingSlow(true), 6500);
+    return () => window.clearTimeout(timer);
+  }, [bookingOpen, bookingEmbedUrl]);
 
   return (
     <main ref={rootRef} className="site-shell">
@@ -143,6 +175,7 @@ export function AssyaExperience() {
         </nav>
         <div className="masthead-actions">
           <button className="icon-button" onClick={() => setCartOpen(true)} aria-label="Ouvrir le panier">
+            <ShoppingBag size={17} />
             <span className="icon-label">Panier</span>
             {cart.length > 0 && <span className="badge">{cart.length}</span>}
           </button>
@@ -428,9 +461,13 @@ export function AssyaExperience() {
           <p>{brand.mission}</p>
         </div>
         <div className="colophon-links">
-          <a href="mailto:contact@assyabeauty.com">contact@assyabeauty.com</a>
+          <a href="mailto:contact@assyabeauty.com">
+            <span>Contact</span>
+            <strong>contact@assyabeauty.com</strong>
+          </a>
           <a href={brand.whatsapp} target="_blank" rel="noreferrer">
-            WhatsApp : +224 {brand.phone}
+            <span>WhatsApp</span>
+            <strong>+224 {brand.phone}</strong>
           </a>
           {socials
             .filter(([name]) => name !== "WhatsApp")
@@ -441,7 +478,8 @@ export function AssyaExperience() {
                 target={href === "#" ? undefined : "_blank"}
                 rel={href === "#" ? undefined : "noreferrer"}
               >
-                {name} : {handle}
+                <span>{name}</span>
+                <strong>{handle}</strong>
               </a>
             ))}
         </div>
@@ -451,8 +489,19 @@ export function AssyaExperience() {
         <MessageCircle size={22} />
       </a>
 
+      <nav className="mobile-quick-actions" aria-label="Actions rapides">
+        <a href={brand.whatsapp} target="_blank" rel="noreferrer">
+          <MessageCircle size={16} />
+          WhatsApp
+        </a>
+        <button onClick={() => setBookingOpen(true)}>
+          <Calendar size={16} />
+          Diagnostic
+        </button>
+      </nav>
+
       {cartOpen && (
-        <aside className="drawer">
+        <aside className="drawer" aria-label="Panier">
           <div className="drawer-head">
             <h2>Panier</h2>
             <button className="icon-button" onClick={() => setCartOpen(false)} aria-label="Fermer le panier">
@@ -488,26 +537,51 @@ export function AssyaExperience() {
 
       {bookingOpen && (
         <div className="modal-backdrop" onClick={() => setBookingOpen(false)}>
-          <div className="booking-modal" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="booking-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="booking-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
             <button className="icon-button close" onClick={() => setBookingOpen(false)} aria-label="Fermer la réservation">
               <X size={18} />
             </button>
-            <p className="tag">Réservation</p>
-            <h2>Prendre un rendez-vous</h2>
-            <p className="booking-intro">
-              Ouvrez votre page de prise de rendez-vous ou intégrez la version embarquée à votre site.
-            </p>
-            <a className="button primary full" href={bookingPublicUrl} target="_blank" rel="noreferrer">
-              Ouvrir la page de réservation
-            </a>
-            <a className="button ghost full" href={bookingEmbedUrl} target="_blank" rel="noreferrer">
-              Ouvrir la version embed
-            </a>
+            <div className="booking-modal-head">
+              <div>
+                <p className="tag">Réservation</p>
+                <h2 id="booking-modal-title">Prendre rendez-vous</h2>
+                <p className="booking-intro">Diagnostic capillaire personnalisé en 60 minutes.</p>
+              </div>
+              <a className="booking-external-link" href={bookingPublicUrl} target="_blank" rel="noreferrer">
+                Ouvrir en grand
+              </a>
+            </div>
             <div className="booking-iframe-wrap">
+              {!bookingLoaded && (
+                <div className="booking-load-state" aria-live="polite">
+                  <span className="booking-spinner" aria-hidden="true" />
+                  <strong>{bookingSlow ? "Connexion lente" : "Connexion au calendrier"}</strong>
+                  <p>
+                    {bookingSlow
+                      ? "Le calendrier prend du temps à charger. Ouvrez la page complète si votre réseau est faible."
+                      : "Chargement sécurisé de la prise de rendez-vous."}
+                  </p>
+                  {bookingSlow && (
+                    <a href={bookingPublicUrl} target="_blank" rel="noreferrer">
+                      Ouvrir la page complète
+                    </a>
+                  )}
+                </div>
+              )}
               <iframe
-                title="Diagnostique capillaire - prise de rendez-vous"
+                title="Diagnostic capillaire - prise de rendez-vous"
                 src={bookingEmbedUrl}
                 loading="lazy"
+                onLoad={() => {
+                  setBookingLoaded(true);
+                  setBookingSlow(false);
+                }}
               />
             </div>
           </div>
